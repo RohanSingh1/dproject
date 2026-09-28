@@ -1,20 +1,24 @@
 package com.dproject.remote.webrtc
 
 import android.content.Context
+import android.content.Intent
+import android.media.projection.MediaProjection
 import android.util.Log
 import org.webrtc.*
 
-class WebRTCManager(
-    context: Context,
-    private val onVideoTrackReady: (VideoTrack) -> Unit,
-) {
+class WebRTCManager(context: Context) {
     private val TAG = "WebRTCManager"
 
+    private val appContext = context.applicationContext
     private val eglBase = EglBase.create()
     private val factory: PeerConnectionFactory
-    private var peerConnection: PeerConnection? = null
+
+    private val surfaceHelper: SurfaceTextureHelper
+    private val videoSource: VideoSource
     private var videoTrack: VideoTrack? = null
-    private var onAnswerReady: ((String) -> Unit)? = null
+    private var screenCapturer: ScreenCapturerAndroid? = null
+
+    private var peerConnection: PeerConnection? = null
     private var signallingClient: SignallingClient? = null
 
     init {
@@ -28,21 +32,31 @@ class WebRTCManager(
             .setVideoEncoderFactory(DefaultVideoEncoderFactory(eglBase.eglBaseContext, true, true))
             .createPeerConnectionFactory()
 
-        setupVideoTrack(context)
+        // isScreencast = true tells the encoder to favour sharpness over frame rate.
+        surfaceHelper = SurfaceTextureHelper.create("CaptureThread", eglBase.eglBaseContext)
+        videoSource = factory.createVideoSource(true)
+        videoTrack = factory.createVideoTrack("video0", videoSource)
     }
 
     fun setSignallingClient(client: SignallingClient) {
         signallingClient = client
     }
 
-    private fun setupVideoTrack(context: Context) {
-        val surfaceHelper = SurfaceTextureHelper.create("CaptureThread", eglBase.eglBaseContext)
-        val screenSource = factory.createVideoSource(true)
-
-        // The actual surface is connected by StreamingService via VirtualDisplay
-        videoTrack = factory.createVideoTrack("video0", screenSource)
-
-        onVideoTrackReady(videoTrack!!)
+    /**
+     * Start mirroring the screen. [permissionData] is the Intent returned by the
+     * MediaProjection permission dialog. ScreenCapturerAndroid builds the
+     * MediaProjection and VirtualDisplay itself and feeds frames into videoSource.
+     */
+    fun startScreenCapture(permissionData: Intent, width: Int, height: Int, fps: Int = 15) {
+        val capturer = ScreenCapturerAndroid(permissionData, object : MediaProjection.Callback() {
+            override fun onStop() {
+                Log.d(TAG, "MediaProjection stopped by system/user")
+            }
+        })
+        capturer.initialize(surfaceHelper, appContext, videoSource.capturerObserver)
+        capturer.startCapture(width, height, fps)
+        screenCapturer = capturer
+        Log.d(TAG, "Screen capture started at ${width}x${height} @ ${fps}fps")
     }
 
     private fun buildPeerConnection(): PeerConnection {
@@ -75,7 +89,6 @@ class WebRTCManager(
     }
 
     fun handleOffer(sdp: String, onAnswer: (String) -> Unit) {
-        onAnswerReady = onAnswer
         peerConnection = buildPeerConnection()
 
         videoTrack?.let { track ->
@@ -110,7 +123,11 @@ class WebRTCManager(
     }
 
     fun dispose() {
+        try { screenCapturer?.stopCapture() } catch (_: InterruptedException) {}
+        screenCapturer?.dispose()
         peerConnection?.close()
+        videoSource.dispose()
+        surfaceHelper.dispose()
         factory.dispose()
         eglBase.release()
     }

@@ -20,12 +20,12 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- Deep link: dproject://join?s=SESSIONID -->
+            <!-- Deep link: opening the join link can offer to open the app -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="http" android:host="192.168.1.114" android:port="3000" android:pathPrefix="/" />
+                <data android:scheme="https" android:host="dproject-orcin.vercel.app" android:pathPrefix="/" />
             </intent-filter>
         </activity>
 

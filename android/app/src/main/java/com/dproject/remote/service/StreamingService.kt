@@ -6,10 +6,6 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.hardware.display.DisplayManager
-import android.hardware.display.VirtualDisplay
-import android.media.projection.MediaProjection
-import android.media.projection.MediaProjectionManager
 import android.os.IBinder
 import android.util.DisplayMetrics
 import android.util.Log
@@ -20,8 +16,6 @@ import com.dproject.remote.webrtc.WebRTCManager
 
 class StreamingService : Service() {
 
-    private var projection: MediaProjection? = null
-    private var virtualDisplay: VirtualDisplay? = null
     private var webRTCManager: WebRTCManager? = null
     private var signallingClient: SignallingClient? = null
 
@@ -54,30 +48,21 @@ class StreamingService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val sessionId = intent?.getStringExtra("sessionId") ?: run { stopSelf(); return START_NOT_STICKY }
-        val resultCode = intent.getIntExtra("resultCode", -1)
         val data = intent.getParcelableExtra<Intent>("data") ?: run { stopSelf(); return START_NOT_STICKY }
-
-        val projectionManager = getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-        projection = projectionManager.getMediaProjection(resultCode, data)
 
         val metrics = getDisplayMetrics()
 
-        webRTCManager = WebRTCManager(applicationContext) { videoTrack ->
-            // VirtualDisplay feeds frames directly into the WebRTC video source
-            virtualDisplay = projection?.createVirtualDisplay(
-                "DProjectCapture",
-                metrics.widthPixels, metrics.heightPixels, metrics.densityDpi,
-                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                videoTrack.surfaceTextureHelper?.handler?.let { null }, // handled by WebRTC internally
-                null, null
-            )
-        }
+        // ScreenCapturerAndroid creates the MediaProjection from the permission Intent
+        // and pumps screen frames straight into the WebRTC video source.
+        webRTCManager = WebRTCManager(applicationContext)
+        webRTCManager?.startScreenCapture(data, metrics.widthPixels, metrics.heightPixels)
 
         val deviceName = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}".trim()
         signallingClient = SignallingClient(
             sessionId, "phone", Config.SERVER_WS, webRTCManager!!,
             deviceName, metrics.widthPixels, metrics.heightPixels
         )
+        webRTCManager?.setSignallingClient(signallingClient!!)
         signallingClient?.connect()
 
         Log.d(TAG, "Streaming started for session $sessionId")
@@ -91,8 +76,6 @@ class StreamingService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        virtualDisplay?.release()
-        projection?.stop()
         webRTCManager?.dispose()
         signallingClient?.disconnect()
     }
