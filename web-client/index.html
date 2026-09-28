@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>D.project — Remote Control</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Landing screen -->
+  <div id="screen-home" class="screen active">
+    <div class="card">
+      <h1>D.project</h1>
+      <p class="subtitle">Generate a link, open it on your phone, control it from here.</p>
+      <button id="btn-generate">Generate Link</button>
+      <div id="session-box" class="hidden">
+        <p class="label">Session link (open this on your phone):</p>
+        <div class="link-row">
+          <input id="session-link" type="text" readonly />
+          <button id="btn-copy">Copy</button>
+        </div>
+        <div id="qr-placeholder" class="qr-box">QR loading…</div>
+        <p class="waiting">Waiting for phone to connect…</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phone join screen (opened from the link on the phone) -->
+  <div id="screen-phone" class="screen">
+    <div class="card">
+      <h1>D.project</h1>
+      <p class="subtitle">Phone detected. Tap <strong>Start Session</strong> to share your screen.</p>
+      <button id="btn-phone-start">Start Session</button>
+      <p id="phone-status" class="status"></p>
+    </div>
+  </div>
+
+  <!-- Control screen (browser side after phone connects) -->
+  <div id="screen-control" class="screen">
+    <div class="toolbar">
+      <span class="session-id-label">Session: <span id="active-session-id"></span></span>
+      <button id="btn-disconnect">Disconnect</button>
+    </div>
+    <div class="viewport-wrap">
+      <video id="remote-video" autoplay playsinline></video>
+      <canvas id="input-overlay"></canvas>
+    </div>
+    <div class="control-bar">
+      <button id="btn-back" title="Back">&#9664;</button>
+      <button id="btn-home" title="Home">&#9711;</button>
+      <button id="btn-recents" title="Recents">&#9632;</button>
+      <input id="text-input" type="text" placeholder="Type to send text…" />
+      <button id="btn-send-text">Send</button>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script type="module" src="client.js"></script>
+</body>
+</html>
