@@ -50,10 +50,19 @@ let phoneNativeSize = { w: 1080, h: 2400 }; // updated when phone sends it
 function detectRole() {
   const params = new URLSearchParams(location.search);
   const sid = params.get('s');
+  const view = params.get('view');
   if (sid) {
+    // Opened on the phone via its join link
     sessionId = sid;
     role = 'phone';
     showScreen('phone');
+  } else if (view) {
+    // Opened from the dashboard to watch an already-connected device
+    sessionId = view;
+    role = 'browser';
+    showScreen('control');
+    ui.activeSessionId.textContent = sessionId;
+    connectWS();
   } else {
     role = 'browser';
     showScreen('home');
@@ -111,7 +120,18 @@ ui.btnPhoneStart.addEventListener('click', () => {
 function connectWS() {
   ws = new WebSocket(`${SERVER_WS}?session=${sessionId}&role=${role}`);
 
-  ws.onopen = () => console.log(`[ws] connected as ${role}`);
+  ws.onopen = () => {
+    console.log(`[ws] connected as ${role}`);
+    // Phone announces itself so it shows up on the dashboard.
+    if (role === 'phone') {
+      send({
+        type: 'device-info',
+        name: describeDevice(),
+        w: window.screen.width,
+        h: window.screen.height,
+      });
+    }
+  };
 
   ws.onmessage = async (e) => {
     const msg = JSON.parse(e.data);
@@ -219,6 +239,35 @@ async function startPeerConnection(isOfferer) {
 
 function send(obj) {
   if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
+}
+
+// Best-effort human label for the phone from its user-agent.
+function describeDevice() {
+  const ua = navigator.userAgent;
+
+  // Device name. iOS puts the device first (iPhone/iPad); Android puts the model
+  // after "Android <ver>;" and may append a "Build/..." token we trim off.
+  let device;
+  if (/iPhone/.test(ua)) device = 'iPhone';
+  else if (/iPad/.test(ua)) device = 'iPad';
+  else if (/iPod/.test(ua)) device = 'iPod';
+  else {
+    const android = ua.match(/Android[^;]*;\s*([^;)]+)/);
+    if (android) device = android[1].replace(/\bBuild\/.*/i, '').trim();
+    else {
+      const paren = ua.match(/\(([^)]+)\)/);
+      device = paren ? paren[1].split(';').map(s => s.trim()).filter(Boolean).pop() : (navigator.platform || 'Unknown');
+    }
+  }
+
+  // Browser. Order matters: Edge and Chrome-for-iOS masquerade as others.
+  let browser = 'Browser';
+  if (/EdgiOS|EdgA|Edg/.test(ua)) browser = 'Edge';
+  else if (/CriOS|Chrome/.test(ua)) browser = 'Chrome';
+  else if (/FxiOS|Firefox/.test(ua)) browser = 'Firefox';
+  else if (/Version\/.*Safari|Safari/.test(ua)) browser = 'Safari';
+
+  return `${device || 'Unknown'} · ${browser}`;
 }
 
 // ── Browser input overlay → send control events to phone ─────────────────────
@@ -332,6 +381,11 @@ ui.textInput.addEventListener('keydown', (e) => {
 ui.btnDisconnect.addEventListener('click', () => {
   pc?.close();
   ws?.close();
+  // Opened from the dashboard → go back to it. Otherwise reset to home.
+  if (new URLSearchParams(location.search).get('view')) {
+    location.href = 'dashboard.html';
+    return;
+  }
   showScreen('home');
   ui.sessionBox.classList.add('hidden');
 });

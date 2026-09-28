@@ -73,7 +73,11 @@ class StreamingService : Service() {
             )
         }
 
-        signallingClient = SignallingClient(sessionId, "phone", Config.SERVER_WS, webRTCManager!!)
+        val deviceName = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}".trim()
+        signallingClient = SignallingClient(
+            sessionId, "phone", Config.SERVER_WS, webRTCManager!!,
+            deviceName, metrics.widthPixels, metrics.heightPixels
+        )
         signallingClient?.connect()
 
         Log.d(TAG, "Streaming started for session $sessionId")

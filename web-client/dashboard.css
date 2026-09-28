@@ -1,0 +1,62 @@
+/* Dashboard-specific styles, layered on top of style.css */
+
+#dash.active { display: block; min-height: 100vh; }
+
+.dash-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+.dash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.dash-header h1 { font-size: 1.6rem; }
+.dash-actions { display: flex; gap: 0.5rem; }
+button.ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+button.ghost:hover { background: var(--surface); color: var(--text); }
+
+.add-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  max-width: 420px;
+}
+
+.device-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.device-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.device-card .top { display: flex; align-items: center; gap: 0.6rem; }
+.dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.dot.on { background: #35d07f; box-shadow: 0 0 0 3px rgba(53,208,127,0.18); }
+.dot.off { background: var(--muted); }
+.device-name { font-weight: 600; font-size: 1rem; word-break: break-word; }
+.device-meta { color: var(--muted); font-size: 0.8rem; line-height: 1.5; }
+.device-meta span { color: var(--text); }
+.card-id { font-family: ui-monospace, monospace; color: var(--accent); }
+
+.card-actions { display: flex; gap: 0.5rem; margin-top: auto; }
+.card-actions button { flex: 1; }
+.card-actions button.open:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }

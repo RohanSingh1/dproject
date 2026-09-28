@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>D.project — Device Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+
+  <!-- Key gate -->
+  <div id="gate" class="screen active">
+    <div class="card">
+      <h1>D.project</h1>
+      <p class="subtitle">Dashboard access. Enter your dashboard key.</p>
+      <div class="link-row">
+        <input id="key-input" type="password" placeholder="Dashboard key" />
+        <button id="btn-unlock">Unlock</button>
+      </div>
+      <p id="gate-error" class="status" style="color: var(--danger);"></p>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dash" class="screen">
+    <div class="dash-wrap">
+      <header class="dash-header">
+        <div>
+          <h1>Your devices</h1>
+          <p class="subtitle" id="dash-sub">Loading…</p>
+        </div>
+        <div class="dash-actions">
+          <button id="btn-add">+ Add device</button>
+          <button id="btn-lock" class="ghost">Lock</button>
+        </div>
+      </header>
+
+      <div id="add-box" class="add-box hidden">
+        <p class="label">Open this link on the new phone (or scan):</p>
+        <div class="link-row">
+          <input id="add-link" type="text" readonly />
+          <button id="btn-add-copy">Copy</button>
+        </div>
+        <div id="add-qr" class="qr-box">QR loading…</div>
+      </div>
+
+      <div id="device-grid" class="device-grid"></div>
+      <p id="empty" class="waiting hidden">No devices yet. Tap "Add device" to connect your first phone.</p>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

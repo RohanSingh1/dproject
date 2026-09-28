@@ -10,6 +10,9 @@ class SignallingClient(
     private val role: String,
     private val serverUrl: String,
     private val webRTCManager: WebRTCManager,
+    private val deviceName: String? = null,
+    private val screenW: Int = 0,
+    private val screenH: Int = 0,
 ) {
     private val TAG = "SignallingClient"
     private val client = OkHttpClient()
@@ -23,6 +26,15 @@ class SignallingClient(
         ws = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 Log.d(TAG, "WS open as $role")
+                // Announce this device so it appears on the dashboard.
+                if (role == "phone" && deviceName != null) {
+                    send(JSONObject().apply {
+                        put("type", "device-info")
+                        put("name", deviceName)
+                        put("w", screenW)
+                        put("h", screenH)
+                    })
+                }
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {

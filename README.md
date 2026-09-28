@@ -43,6 +43,13 @@ Served automatically by the server at `http://localhost:3000`.
 3. Scan the QR on your phone OR paste the session ID into the Android app
 4. Your phone screen appears in the browser — click to tap, drag to swipe
 
+## Device Dashboard
+Open `/dashboard.html` to see all your connected devices in one place: online/offline status, device name, screen size, and when each connected. Click **Open** on any online device to control it in a new tab.
+
+- The dashboard is protected by a key. Set `DASHBOARD_KEY` on the server (Render → Environment).
+- The key is entered once per browser tab and stored only in that tab (`sessionStorage`). It is sent only to your own server, in the `x-dashboard-key` header.
+- Use **+ Add device** to generate a join link/QR for enrolling a new phone.
+
 ## Deployment
 - Deploy `server/` to Railway or Render (free tier)
 - Update `SERVER_WS` / `SERVER_HTTP` in `web-client/client.js` OR serve the web client from the same server (already configured)
