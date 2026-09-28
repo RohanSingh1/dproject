@@ -23,19 +23,21 @@ const LAN_IP = getLanIP();
 // Allow the Vercel-hosted web client to call the API cross-origin
 app.use((req, res, next) => {
   res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Headers', 'x-dashboard-key');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
 
 // Serve the web client statically
 app.use(express.static(path.join(__dirname, '../web-client')));
 
-// sessions: Map<sessionId, { browser: ws | null, phone: ws | null }>
+// sessions: Map<sessionId, { browser, phone, createdAt, phoneSince, device, screen }>
 const sessions = new Map();
 
 // Generate a new session ID — returns joinUrl using LAN IP so phones can reach it
 app.get('/api/session', (req, res) => {
   const id = crypto.randomUUID().slice(0, 8).toUpperCase();
-  sessions.set(id, { browser: null, phone: null });
+  sessions.set(id, { browser: null, phone: null, createdAt: Date.now(), phoneSince: null, device: null, screen: null });
   const PORT = process.env.PORT || 3000;
   const joinUrl = `http://${LAN_IP}:${PORT}/?s=${id}`;
   console.log(`[session] Created: ${id}  join: ${joinUrl}`);
@@ -44,6 +46,24 @@ app.get('/api/session', (req, res) => {
 
 // Health check
 app.get('/api/health', (_, res) => res.json({ ok: true }));
+
+// Dashboard: list live sessions. Protected by the DASHBOARD_KEY env var.
+app.get('/api/sessions', (req, res) => {
+  const key = process.env.DASHBOARD_KEY;
+  if (!key) return res.status(503).json({ error: 'DASHBOARD_KEY is not set on the server' });
+  if (req.get('x-dashboard-key') !== key) return res.status(401).json({ error: 'Wrong dashboard key' });
+
+  const list = [...sessions.entries()].map(([id, s]) => ({
+    id,
+    createdAt: s.createdAt,
+    phoneConnected: s.phone?.readyState === 1,
+    phoneSince: s.phoneSince,
+    viewerConnected: s.browser?.readyState === 1,
+    device: s.device,
+    screen: s.screen,
+  }));
+  res.json({ sessions: list });
+});
 
 wss.on('connection', (ws, req) => {
   const url = new URL(req.url, 'http://localhost');
