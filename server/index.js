@@ -84,6 +84,7 @@ wss.on('connection', (ws, req) => {
 
   const session = sessions.get(sessionId);
   session[role] = ws;
+  if (role === 'phone') session.phoneSince = Date.now();
   console.log(`[ws] ${role} joined session ${sessionId}`);
 
   // Notify the other peer that someone joined
@@ -97,6 +98,14 @@ wss.on('connection', (ws, req) => {
     let msg;
     try { msg = JSON.parse(data); } catch { return; }
 
+    // Phone reporting its identity — store it for the dashboard, don't relay.
+    if (msg.type === 'device-info') {
+      session.device = String(msg.name || 'Unknown device').slice(0, 80);
+      if (msg.w && msg.h) session.screen = { w: msg.w, h: msg.h };
+      console.log(`[device] ${sessionId} → ${session.device}`);
+      return;
+    }
+
     const peer = role === 'browser' ? session.phone : session.browser;
 
     // Relay signalling (offer, answer, ICE) and control events straight through
@@ -108,6 +117,7 @@ wss.on('connection', (ws, req) => {
   ws.on('close', () => {
     console.log(`[ws] ${role} left session ${sessionId}`);
     session[role] = null;
+    if (role === 'phone') session.phoneSince = null;
     const peer = role === 'browser' ? session.phone : session.browser;
     if (peer?.readyState === 1) {
       peer.send(JSON.stringify({ type: 'peer-left', role }));
