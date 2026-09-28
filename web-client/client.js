@@ -253,8 +253,11 @@ function describeDevice() {
   else if (/iPod/.test(ua)) device = 'iPod';
   else {
     const android = ua.match(/Android[^;]*;\s*([^;)]+)/);
-    if (android) device = android[1].replace(/\bBuild\/.*/i, '').trim();
-    else {
+    if (android) {
+      // Recent Chrome freezes the model to "K" for privacy; show a clean label.
+      const model = android[1].replace(/\bBuild\/.*/i, '').trim();
+      device = (!model || model === 'K') ? 'Android' : model;
+    } else {
       const paren = ua.match(/\(([^)]+)\)/);
       device = paren ? paren[1].split(';').map(s => s.trim()).filter(Boolean).pop() : (navigator.platform || 'Unknown');
     }
