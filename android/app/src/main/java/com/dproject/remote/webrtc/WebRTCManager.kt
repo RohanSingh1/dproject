@@ -107,12 +107,12 @@ class WebRTCManager(context: Context) {
                             override fun onCreateFailure(e: String?) = Unit
                         }, answer)
                     }
-                    override fun onCreateFailure(error: String?) = Log.e(TAG, "createAnswer fail: $error")
+                    override fun onCreateFailure(error: String?) { Log.e(TAG, "createAnswer fail: $error") }
                     override fun onSetSuccess() = Unit
                     override fun onSetFailure(e: String?) = Unit
                 }, MediaConstraints())
             }
-            override fun onSetFailure(e: String?) = Log.e(TAG, "setRemote fail: $e")
+            override fun onSetFailure(e: String?) { Log.e(TAG, "setRemote fail: $e") }
             override fun onCreateSuccess(s: SessionDescription?) = Unit
             override fun onCreateFailure(e: String?) = Unit
         }, sessionDescription)

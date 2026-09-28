@@ -7,3 +7,9 @@ android/app/build/
 android/local.properties
 *.apk
 .claude/settings.local.json
+
+# Local Android build
+android/local.properties
+android/.gradle/
+android/build/
+android/app/build/
