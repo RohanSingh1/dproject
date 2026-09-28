@@ -28,6 +28,10 @@ const ui = {
   qrPlaceholder:  document.getElementById('qr-placeholder'),
   btnPhoneStart:  document.getElementById('btn-phone-start'),
   phoneStatus:    document.getElementById('phone-status'),
+  btnDownloadApp: document.getElementById('btn-download-app'),
+  downloadStatus: document.getElementById('download-status'),
+  phoneSessionId: document.getElementById('phone-session-id'),
+  btnCopySid:     document.getElementById('btn-copy-sid'),
   activeSessionId:document.getElementById('active-session-id'),
   btnDisconnect:  document.getElementById('btn-disconnect'),
   remoteVideo:    document.getElementById('remote-video'),
@@ -55,6 +59,7 @@ function detectRole() {
     // Opened on the phone via its join link
     sessionId = sid;
     role = 'phone';
+    if (ui.phoneSessionId) ui.phoneSessionId.value = sid;
     showScreen('phone');
   } else if (view) {
     // Opened from the dashboard to watch an already-connected device
@@ -111,7 +116,35 @@ async function renderQR(text) {
 }
 
 // ── Phone side ────────────────────────────────────────────────────────────────
-ui.btnPhoneStart.addEventListener('click', () => {
+// Primary action: download the Android app. The browser can't screen-record, so
+// the app is how you actually mirror the phone.
+ui.btnDownloadApp?.addEventListener('click', () => {
+  const url = window.DPROJECT_APK_URL;
+  if (!url) {
+    ui.downloadStatus.textContent = 'App download URL is not configured yet.';
+    return;
+  }
+  // Trigger the download. GitHub serves the APK as an attachment, so this
+  // downloads without navigating away.
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'dproject.apk';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  ui.downloadStatus.textContent =
+    'Downloading… when it finishes, open the file to install (allow "unknown sources"), then open the app and enter the session ID below.';
+});
+
+ui.btnCopySid?.addEventListener('click', () => {
+  navigator.clipboard.writeText(ui.phoneSessionId.value);
+  ui.btnCopySid.textContent = 'Copied!';
+  setTimeout(() => (ui.btnCopySid.textContent = 'Copy'), 1500);
+});
+
+// Fallback: stream this phone straight from the browser (camera only on mobile).
+ui.btnPhoneStart?.addEventListener('click', (e) => {
+  e.preventDefault();
   ui.phoneStatus.textContent = 'Connecting…';
   connectWS();
 });

@@ -30,8 +30,15 @@
   <div id="screen-phone" class="screen">
     <div class="card">
       <h1>D.project</h1>
-      <p class="subtitle">Phone detected. Tap <strong>Start Session</strong> to share your screen.</p>
-      <button id="btn-phone-start">Start Session</button>
+      <p class="subtitle">Install the app for full screen control. Tap below to download it.</p>
+      <button id="btn-download-app">Start Session (download app)</button>
+      <p id="download-status" class="status"></p>
+      <p class="label">After installing, open the app and enter this session ID:</p>
+      <div class="link-row">
+        <input id="phone-session-id" type="text" readonly />
+        <button id="btn-copy-sid">Copy</button>
+      </div>
+      <p class="waiting">Or <a id="btn-phone-start" href="#" style="color: var(--accent);">stream this phone from the browser instead</a> (camera only).</p>
       <p id="phone-status" class="status"></p>
     </div>
   </div>

@@ -8,6 +8,9 @@ on:
       - '.github/workflows/android.yml'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -37,9 +40,20 @@ jobs:
         working-directory: android
         run: gradle assembleDebug --stacktrace --no-daemon
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: dproject-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      # Publish the APK to a public "latest" release so phones can download it
+      # directly from a stable URL.
+      - name: Publish APK to latest release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest APK
+          body: Auto-built debug APK. Sideload on Android (allow unknown sources).
+          files: android/app/build/outputs/apk/debug/app-debug.apk
